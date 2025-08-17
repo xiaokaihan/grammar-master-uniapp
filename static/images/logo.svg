@@ -1,0 +1,24 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="60" cy="60" r="60" fill="#667eea"/>
+  
+  <!-- 书本图标 -->
+  <path d="M30 40C30 35.5817 33.5817 32 38 32H82C86.4183 32 90 35.5817 90 40V80C90 84.4183 86.4183 88 82 88H38C33.5817 88 30 84.4183 30 80V40Z" fill="white"/>
+  
+  <!-- 书本内页 -->
+  <path d="M35 45C35 42.2386 37.2386 40 40 40H80C82.7614 40 85 42.2386 85 45V75C85 77.7614 82.7614 80 80 80H40C37.2386 80 35 77.7614 35 75V45Z" fill="#f8f9fa"/>
+  
+  <!-- 文字线条 -->
+  <rect x="42" y="50" width="36" height="3" rx="1.5" fill="#667eea"/>
+  <rect x="42" y="58" width="28" height="3" rx="1.5" fill="#667eea"/>
+  <rect x="42" y="66" width="32" height="3" rx="1.5" fill="#667eea"/>
+  
+  <!-- 语法符号 -->
+  <circle cx="75" cy="55" r="8" fill="#ff6b6b"/>
+  <text x="75" y="60" text-anchor="middle" fill="white" font-size="12" font-weight="bold">G</text>
+  
+  <!-- 装饰点 -->
+  <circle cx="45" cy="75" r="2" fill="#667eea"/>
+  <circle cx="55" cy="75" r="2" fill="#667eea"/>
+  <circle cx="65" cy="75" r="2" fill="#667eea"/>
+</svg>

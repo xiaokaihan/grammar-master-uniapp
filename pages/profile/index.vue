@@ -4,7 +4,7 @@
     <view class="user-card card">
       <view class="user-header">
         <view class="avatar-section">
-          <image class="avatar" src="/static/images/avatar-default.svg" mode="aspectFill"></image>
+          <image class="avatar" :src="userAvatar" mode="aspectFill"></image>
           <view class="level-badge">
             <text class="level-text">Lv.{{ userInfo.level }}</text>
           </view>
@@ -130,6 +130,8 @@
 </template>
 
 <script>
+import { loginManager } from '@/utils/loginManager.js'
+
 export default {
   data() {
     return {
@@ -199,8 +201,54 @@ export default {
   },
   onLoad() {
     this.generateCalendarDays()
+    this.loadUserInfo()
+  },
+  onShow() {
+    this.loadUserInfo()
+  },
+  computed: {
+    userAvatar() {
+      const currentUser = loginManager.getCurrentUser()
+      return currentUser?.avatar || '/static/images/avatar-default.svg'
+    }
   },
   methods: {
+    // 加载用户信息
+    async loadUserInfo() {
+      try {
+        const isLoggedIn = await loginManager.checkLoginStatus()
+        
+        if (isLoggedIn) {
+          const currentUser = loginManager.getCurrentUser()
+          const loginStatus = loginManager.getLoginStatus()
+          
+          // 更新用户信息显示
+          this.userInfo.username = currentUser.nickname || '用户'
+          this.userInfo.description = loginStatus === 'guest' ? '游客模式 - 功能受限' : '坚持学习，提升英语语法水平'
+          
+          // 如果是游客模式，显示提示
+          if (loginStatus === 'guest') {
+            this.userInfo.level = 1
+            this.userInfo.nextLevelExp = 999
+            this.userInfo.levelProgress = 0
+            this.userInfo.studyDays = 0
+            this.userInfo.completedLessons = 0
+          }
+        } else {
+          // 未登录，跳转到登录页面
+          uni.redirectTo({
+            url: '/pages/login/index'
+          })
+        }
+      } catch (error) {
+        console.error('加载用户信息失败:', error)
+        uni.showToast({
+          title: '加载用户信息失败',
+          icon: 'none'
+        })
+      }
+    },
+
     generateCalendarDays() {
       const today = new Date()
       const currentMonth = today.getMonth()
@@ -242,17 +290,35 @@ export default {
         url: path
       })
     },
-    logout() {
+    async logout() {
       uni.showModal({
         title: '确认退出',
         content: '确定要退出登录吗？',
-        success: (res) => {
+        success: async (res) => {
           if (res.confirm) {
-            // 清除用户数据
-            uni.clearStorageSync()
-            uni.reLaunch({
-              url: '/pages/index/index'
-            })
+            try {
+              const result = await loginManager.logout()
+              
+              if (result.success) {
+                uni.showToast({
+                  title: '已退出登录',
+                  icon: 'success'
+                })
+                
+                // 跳转到登录页面
+                uni.redirectTo({
+                  url: '/pages/login/index'
+                })
+              } else {
+                throw new Error(result.message)
+              }
+            } catch (error) {
+              console.error('退出登录失败:', error)
+              uni.showToast({
+                title: '退出登录失败',
+                icon: 'none'
+              })
+            }
           }
         }
       })
