@@ -72,12 +72,12 @@ export function useAuth() {
   }
 
   // 微信登录
-  const wechatLogin = async () => {
+  const wechatLogin = async (userInfo) => {
     try {
       isLoading.value = true
       error.value = null
       
-      const result = await authService.wechatLogin()
+      const result = await authService.wechatLogin(userInfo)
       return result
       
     } catch (err) {

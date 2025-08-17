@@ -148,7 +148,11 @@ export default {
       this.isLoggingIn = true
       
       try {
-        const result = await authService.wechatLogin()
+        // 先获取用户信息 - 必须在用户点击事件中直接调用
+        const userInfo = await authService.getUserProfile()
+        
+        // 然后进行微信登录
+        const result = await authService.wechatLogin(userInfo)
         
         if (result.success) {
           uni.showToast({
@@ -171,6 +175,10 @@ export default {
           errorMessage = '网络超时，请检查网络连接后重试'
         } else if (error.message.includes('取消授权')) {
           errorMessage = '您取消了授权，请重新点击登录按钮'
+        } else if (error.message.includes('can only be invoked by user TAP gesture')) {
+          errorMessage = '获取用户信息失败，请重新点击登录按钮'
+        } else if (error.message.includes('授权描述参数错误')) {
+          errorMessage = '授权参数错误，请重试'
         }
         
         uni.showModal({

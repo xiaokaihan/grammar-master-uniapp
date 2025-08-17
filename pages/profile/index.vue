@@ -5,12 +5,20 @@
       <view class="user-header">
         <view class="avatar-section">
           <image class="avatar" :src="userAvatar" mode="aspectFill"></image>
+          <view class="avatar-edit" @click="editAvatar">
+            <text class="edit-icon">✏️</text>
+          </view>
           <view class="level-badge">
             <text class="level-text">Lv.{{ userInfo.level }}</text>
           </view>
         </view>
         <view class="user-info">
-          <text class="username">{{ userInfo.username }}</text>
+          <view class="username-section">
+            <text class="username">{{ userInfo.nickname || '未设置昵称' }}</text>
+            <view class="edit-nickname" @click="editNickname">
+              <text class="edit-icon">✏️</text>
+            </view>
+          </view>
           <text class="user-desc">{{ userInfo.description }}</text>
           <view class="user-stats">
             <text class="stat-item">学习{{ userInfo.studyDays }}天</text>
@@ -24,6 +32,36 @@
           <view class="progress-bar">
             <view class="progress-fill" :style="{ width: userInfo.levelProgress + '%' }"></view>
           </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 基本信息 -->
+    <view class="basic-info card">
+      <view class="section-header">
+        <text class="section-title">基本信息</text>
+        <text class="edit-btn" @click="editBasicInfo">编辑</text>
+      </view>
+      <view class="info-list">
+        <view class="info-item">
+          <text class="info-label">性别</text>
+          <text class="info-value">{{ formatGender(userInfo.gender) }}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">地区</text>
+          <text class="info-value">{{ formatLocation(userInfo.country, userInfo.province, userInfo.city) }}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">语言</text>
+          <text class="info-value">{{ formatLanguage(userInfo.language) }}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">注册时间</text>
+          <text class="info-value">{{ formatDate(userInfo.createTime) }}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">最后登录</text>
+          <text class="info-value">{{ formatDate(userInfo.lastLoginTime) }}</text>
         </view>
       </view>
     </view>
@@ -99,10 +137,9 @@
     <view class="function-menu card">
       <text class="section-title">功能设置</text>
       <view class="menu-list">
-        <!-- 添加测试按钮 -->
-        <view class="menu-item" @click="testNavigation">
-          <view class="menu-icon">🧪</view>
-          <text class="menu-text">测试导航</text>
+        <view class="menu-item" @click="navigateTo('/pages/profile/loginHistory')">
+          <view class="menu-icon">📝</view>
+          <text class="menu-text">登录历史</text>
           <text class="menu-arrow">></text>
         </view>
         <view class="menu-item" @click="navigateTo('/pages/profile/settings')">
@@ -132,6 +169,80 @@
     <view class="logout-section">
       <button class="btn-secondary logout-btn" @click="logout">退出登录</button>
     </view>
+
+    <!-- 昵称编辑弹窗 -->
+    <view class="modal-overlay" v-if="showNicknameModal" @click="closeNicknameModal">
+      <view class="modal-content" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">修改昵称</text>
+          <text class="modal-close" @click="closeNicknameModal">×</text>
+        </view>
+        <view class="modal-body">
+          <input 
+            class="nickname-input" 
+            v-model="editingNickname" 
+            placeholder="请输入新昵称"
+            maxlength="20"
+          />
+          <text class="input-tip">昵称长度1-20个字符</text>
+        </view>
+        <view class="modal-footer">
+          <button class="btn-cancel" @click="closeNicknameModal">取消</button>
+          <button class="btn-confirm" @click="saveNickname">确定</button>
+        </view>
+      </view>
+    </view>
+
+    <!-- 基本信息编辑弹窗 -->
+    <view class="modal-overlay" v-if="showBasicInfoModal" @click="closeBasicInfoModal">
+      <view class="modal-content" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">编辑基本信息</text>
+          <text class="modal-close" @click="closeBasicInfoModal">×</text>
+        </view>
+        <view class="modal-body">
+          <view class="form-item">
+            <text class="form-label">性别</text>
+            <picker 
+              class="form-picker" 
+              :value="editingBasicInfo.gender" 
+              :range="genderOptions" 
+              @change="onGenderChange"
+            >
+              <text class="picker-text">{{ formatGender(editingBasicInfo.gender) }}</text>
+            </picker>
+          </view>
+          <view class="form-item">
+            <text class="form-label">国家</text>
+            <input 
+              class="form-input" 
+              v-model="editingBasicInfo.country" 
+              placeholder="请输入国家"
+            />
+          </view>
+          <view class="form-item">
+            <text class="form-label">省份</text>
+            <input 
+              class="form-input" 
+              v-model="editingBasicInfo.province" 
+              placeholder="请输入省份"
+            />
+          </view>
+          <view class="form-item">
+            <text class="form-label">城市</text>
+            <input 
+              class="form-input" 
+              v-model="editingBasicInfo.city" 
+              placeholder="请输入城市"
+            />
+          </view>
+        </view>
+        <view class="modal-footer">
+          <button class="btn-cancel" @click="closeBasicInfoModal">取消</button>
+          <button class="btn-confirm" @click="saveBasicInfo">确定</button>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -142,13 +253,20 @@ export default {
   data() {
     return {
       userInfo: {
-        username: '加载中...',
+        nickname: '',
         description: '正在加载用户信息',
         level: 1,
         nextLevelExp: 999,
         levelProgress: 0,
         studyDays: 0,
-        completedLessons: 0
+        completedLessons: 0,
+        gender: 0,
+        country: '',
+        province: '',
+        city: '',
+        language: 'zh_CN',
+        createTime: null,
+        lastLoginTime: null
       },
       learningStats: {
         totalLessons: 50,
@@ -203,39 +321,58 @@ export default {
       totalAchievements: 12,
       currentMonth: '2024年1月',
       calendarDays: [],
-      authStatus: AUTH_STATUS.UNKNOWN
+      authStatus: AUTH_STATUS.UNKNOWN,
+      
+      // 弹窗状态
+      showNicknameModal: false,
+      showBasicInfoModal: false,
+      editingNickname: '',
+      editingBasicInfo: {
+        gender: 0,
+        country: '',
+        province: '',
+        city: ''
+      },
+      
+      // 选项数据
+      genderOptions: ['保密', '男', '女']
     }
   },
+  
   onLoad() {
     this.generateCalendarDays()
     this.initAuth()
   },
+  
   onShow() {
     this.refreshUserInfo()
   },
+  
   onUnload() {
-    // 移除状态监听器
     authService.removeStatusListener(this.handleStatusChange)
   },
+  
   computed: {
     userAvatar() {
-      const currentUser = authService.getUser()
-      return currentUser?.avatar || '/static/images/avatar-default.svg'
+      // 根据性别设置默认头像
+      if (this.userInfo.gender === 1) {
+        return '/static/images/avatar-male.svg'
+      } else if (this.userInfo.gender === 2) {
+        return '/static/images/avatar-female.svg'
+      } else {
+        return '/static/images/avatar-default.svg'
+      }
     }
   },
+  
   methods: {
     /**
      * 初始化认证服务
      */
     async initAuth() {
       try {
-        // 添加状态变化监听器
         authService.addStatusListener(this.handleStatusChange)
-        
-        // 初始化认证服务
         await authService.init()
-        
-        // 加载用户信息
         this.loadUserInfo()
       } catch (error) {
         console.error('初始化认证服务失败:', error)
@@ -250,10 +387,8 @@ export default {
       this.authStatus = status
       
       if (status === AUTH_STATUS.LOGGED_OUT) {
-        // 用户已退出，跳转到登录页面
         this.redirectToLogin()
       } else {
-        // 刷新用户信息
         this.loadUserInfo()
       }
     },
@@ -269,14 +404,22 @@ export default {
         }
 
         const currentUser = authService.getUser()
-        const permissions = authService.getPermissions()
-        
         if (!currentUser) {
           throw new Error('用户信息获取失败')
         }
 
         // 更新用户信息显示
-        this.userInfo.username = currentUser.nickname || '用户'
+        this.userInfo = {
+          ...this.userInfo,
+          nickname: currentUser.nickname || '未设置昵称',
+          gender: currentUser.gender || 0,
+          country: currentUser.country || '',
+          province: currentUser.province || '',
+          city: currentUser.city || '',
+          language: currentUser.language || 'zh_CN',
+          createTime: currentUser.createTime || null,
+          lastLoginTime: currentUser.lastLoginTime || null
+        }
         
         if (authService.isGuest()) {
           this.userInfo.description = '游客模式 - 功能受限'
@@ -286,20 +429,16 @@ export default {
           this.userInfo.studyDays = 0
           this.userInfo.completedLessons = 0
           
-          // 游客模式下的统计
           this.learningStats.completedLessons = 0
           this.learningStats.accuracy = 0
           this.learningStats.streak = 0
         } else {
           this.userInfo.description = '坚持学习，提升英语语法水平'
-          
-          // 微信用户的统计（这里可以连接真实数据）
           this.learningStats.completedLessons = 23
           this.learningStats.accuracy = 78
           this.learningStats.streak = 15
         }
 
-        // 更新成就状态
         this.updateAchievements()
         
       } catch (error) {
@@ -313,32 +452,30 @@ export default {
      */
     updateAchievements() {
       if (authService.isGuest()) {
-        // 游客模式只解锁基础成就
         this.achievements.forEach(achievement => {
           achievement.unlocked = achievement.id <= 2
         })
       } else {
-        // 微信用户根据学习进度解锁成就
         const completedLessons = this.learningStats.completedLessons
         
         this.achievements.forEach(achievement => {
           switch (achievement.id) {
-            case 1: // 初来乍到
+            case 1:
               achievement.unlocked = completedLessons >= 1
               break
-            case 2: // 坚持不懈
+            case 2:
               achievement.unlocked = this.learningStats.streak >= 7
               break
-            case 3: // 知识达人
+            case 3:
               achievement.unlocked = completedLessons >= 10
               break
-            case 4: // 完美主义
+            case 4:
               achievement.unlocked = this.learningStats.accuracy >= 100
               break
-            case 5: // 时间管理
+            case 5:
               achievement.unlocked = this.learningStats.streak >= 30
               break
-            case 6: // 语法大师
+            case 6:
               achievement.unlocked = completedLessons >= 50
               break
           }
@@ -364,14 +501,12 @@ export default {
     handleAuthError(error) {
       console.error('认证错误:', error)
       
-      // 显示错误提示
       uni.showToast({
         title: '认证失败，请重新登录',
         icon: 'none',
         duration: 2000
       })
       
-      // 延迟跳转到登录页面
       setTimeout(() => {
         this.redirectToLogin()
       }, 2000)
@@ -385,11 +520,296 @@ export default {
         url: '/pages/login/index',
         fail: (err) => {
           console.error('跳转登录页面失败:', err)
-          // 如果跳转失败，使用 reLaunch
           uni.reLaunch({
             url: '/pages/login/index'
           })
         }
+      })
+    },
+
+    /**
+     * 编辑头像
+     */
+    editAvatar() {
+      if (authService.isGuest()) {
+        uni.showToast({
+          title: '游客模式无法修改头像',
+          icon: 'none'
+        })
+        return
+      }
+      
+      uni.showActionSheet({
+        itemList: ['从相册选择', '拍照'],
+        success: (res) => {
+          if (res.tapIndex === 0) {
+            this.chooseImage('album')
+          } else if (res.tapIndex === 1) {
+            this.chooseImage('camera')
+          }
+        }
+      })
+    },
+
+    /**
+     * 选择图片
+     */
+    chooseImage(sourceType) {
+      uni.chooseImage({
+        count: 1,
+        sourceType: [sourceType],
+        success: (res) => {
+          this.uploadAvatar(res.tempFilePaths[0])
+        }
+      })
+    },
+
+    /**
+     * 上传头像
+     */
+    async uploadAvatar(filePath) {
+      try {
+        uni.showLoading({ title: '上传中...' })
+        
+        // 这里应该调用云函数上传头像
+        // 暂时模拟上传成功
+        setTimeout(() => {
+          uni.hideLoading()
+          uni.showToast({
+            title: '头像上传成功',
+            icon: 'success'
+          })
+        }, 2000)
+        
+      } catch (error) {
+        uni.hideLoading()
+        uni.showToast({
+          title: '头像上传失败',
+          icon: 'none'
+        })
+      }
+    },
+
+    /**
+     * 编辑昵称
+     */
+    editNickname() {
+      if (authService.isGuest()) {
+        uni.showToast({
+          title: '游客模式无法修改昵称',
+          icon: 'none'
+        })
+        return
+      }
+      
+      this.editingNickname = this.userInfo.nickname === '未设置昵称' ? '' : this.userInfo.nickname
+      this.showNicknameModal = true
+    },
+
+    /**
+     * 关闭昵称编辑弹窗
+     */
+    closeNicknameModal() {
+      this.showNicknameModal = false
+      this.editingNickname = ''
+    },
+
+    /**
+     * 保存昵称
+     */
+    async saveNickname() {
+      if (!this.editingNickname.trim()) {
+        uni.showToast({
+          title: '昵称不能为空',
+          icon: 'none'
+        })
+        return
+      }
+      
+      try {
+        uni.showLoading({ title: '保存中...' })
+        
+        const currentUser = authService.getUser()
+        if (!currentUser || !currentUser._id) {
+          throw new Error('用户信息不完整')
+        }
+        
+        // 调用云函数更新昵称
+        const result = await uniCloud.callFunction({
+          name: 'updateUserInfo',
+          data: {
+            userId: currentUser._id,
+            updateData: {
+              nickname: this.editingNickname.trim()
+            }
+          }
+        })
+        
+        if (result.result.success) {
+          // 更新本地用户信息
+          this.userInfo.nickname = this.editingNickname.trim()
+          
+          // 更新认证服务中的用户信息
+          if (authService.updateUserInfo) {
+            await authService.updateUserInfo(result.result.data)
+          }
+          
+          this.closeNicknameModal()
+          uni.showToast({
+            title: '昵称修改成功',
+            icon: 'success'
+          })
+        } else {
+          throw new Error(result.result.message)
+        }
+        
+      } catch (error) {
+        console.error('昵称修改失败:', error)
+        uni.showToast({
+          title: error.message || '昵称修改失败',
+          icon: 'none'
+        })
+      } finally {
+        uni.hideLoading()
+      }
+    },
+
+    /**
+     * 编辑基本信息
+     */
+    editBasicInfo() {
+      if (authService.isGuest()) {
+        uni.showToast({
+          title: '游客模式无法修改信息',
+          icon: 'none'
+        })
+        return
+      }
+      
+      this.editingBasicInfo = {
+        gender: this.userInfo.gender,
+        country: this.userInfo.country,
+        province: this.userInfo.province,
+        city: this.userInfo.city
+      }
+      this.showBasicInfoModal = true
+    },
+
+    /**
+     * 关闭基本信息编辑弹窗
+     */
+    closeBasicInfoModal() {
+      this.showBasicInfoModal = false
+    },
+
+    /**
+     * 性别选择变化
+     */
+    onGenderChange(e) {
+      this.editingBasicInfo.gender = parseInt(e.detail.value)
+    },
+
+    /**
+     * 保存基本信息
+     */
+    async saveBasicInfo() {
+      try {
+        uni.showLoading({ title: '保存中...' })
+        
+        const currentUser = authService.getUser()
+        if (!currentUser || !currentUser._id) {
+          throw new Error('用户信息不完整')
+        }
+        
+        // 调用云函数更新基本信息
+        const result = await uniCloud.callFunction({
+          name: 'updateUserInfo',
+          data: {
+            userId: currentUser._id,
+            updateData: {
+              gender: this.editingBasicInfo.gender,
+              country: this.editingBasicInfo.country,
+              province: this.editingBasicInfo.province,
+              city: this.editingBasicInfo.city
+            }
+          }
+        })
+        
+        if (result.result.success) {
+          // 更新本地用户信息
+          this.userInfo = {
+            ...this.userInfo,
+            ...this.editingBasicInfo
+          }
+          
+          // 更新认证服务中的用户信息
+          if (authService.updateUserInfo) {
+            await authService.updateUserInfo(result.result.data)
+          }
+          
+          this.closeBasicInfoModal()
+          uni.showToast({
+            title: '信息修改成功',
+            icon: 'success'
+          })
+        } else {
+          throw new Error(result.result.message)
+        }
+        
+      } catch (error) {
+        console.error('信息修改失败:', error)
+        uni.showToast({
+          title: error.message || '信息修改失败',
+          icon: 'none'
+        })
+      } finally {
+        uni.hideLoading()
+      }
+    },
+
+    /**
+     * 格式化性别显示
+     */
+    formatGender(gender) {
+      const genderMap = ['保密', '男', '女']
+      return genderMap[gender] || '保密'
+    },
+
+    /**
+     * 格式化地区显示
+     */
+    formatLocation(country, province, city) {
+      if (!country && !province && !city) {
+        return '未设置'
+      }
+      
+      const parts = [country, province, city].filter(Boolean)
+      return parts.join(' ')
+    },
+
+    /**
+     * 格式化语言显示
+     */
+    formatLanguage(language) {
+      const languageMap = {
+        'zh_CN': '简体中文',
+        'zh_TW': '繁体中文',
+        'en_US': 'English'
+      }
+      return languageMap[language] || language
+    },
+
+    /**
+     * 格式化日期显示
+     */
+    formatDate(timestamp) {
+      if (!timestamp) return '未知'
+      
+      const date = new Date(timestamp)
+      return date.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
       })
     },
 
@@ -404,7 +824,7 @@ export default {
       for (let i = 1; i <= daysInMonth; i++) {
         const date = new Date(currentYear, currentMonth, i)
         const isToday = i === today.getDate()
-        const studied = Math.random() > 0.3 // 模拟学习数据
+        const studied = Math.random() > 0.3
         
         this.calendarDays.push({
           date: i,
@@ -432,7 +852,6 @@ export default {
     },
     
     navigateTo(path) {
-      // 使用认证服务检查页面访问权限
       authService.navigateToPage(path).catch(error => {
         console.error('页面导航失败:', error)
         uni.showToast({
@@ -457,7 +876,6 @@ export default {
                   icon: 'success'
                 })
                 
-                // 跳转到登录页面
                 this.redirectToLogin()
               } else {
                 throw new Error(result.message)
@@ -466,37 +884,6 @@ export default {
               console.error('退出登录失败:', error)
               uni.showToast({
                 title: '退出登录失败',
-                icon: 'none'
-              })
-            }
-          }
-        }
-      })
-    },
-
-    testNavigation() {
-      uni.showModal({
-        title: '测试导航',
-        content: '点击确定将尝试导航到首页。',
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              const result = await authService.navigateToPage('/pages/index/index')
-              if (result) {
-                uni.showToast({
-                  title: '导航成功',
-                  icon: 'success'
-                })
-              } else {
-                uni.showToast({
-                  title: '导航失败',
-                  icon: 'none'
-                })
-              }
-            } catch (error) {
-              console.error('测试导航失败:', error)
-              uni.showToast({
-                title: '测试导航失败',
                 icon: 'none'
               })
             }
@@ -531,6 +918,25 @@ export default {
   border: 4rpx solid #667eea;
 }
 
+.avatar-edit {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.edit-icon {
+  font-size: 24rpx;
+  color: white;
+}
+
 .level-badge {
   position: absolute;
   bottom: -10rpx;
@@ -547,12 +953,29 @@ export default {
   flex: 1;
 }
 
+.username-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
 .username {
   font-size: 36rpx;
   font-weight: bold;
   color: #333;
-  margin-bottom: 10rpx;
   display: block;
+}
+
+.edit-nickname {
+  margin-left: 10rpx;
+  padding: 5rpx 10rpx;
+  background: #f0f0f0;
+  border-radius: 10rpx;
+}
+
+.edit-nickname .edit-icon {
+  font-size: 24rpx;
+  color: #667eea;
 }
 
 .user-desc {
@@ -608,6 +1031,47 @@ export default {
   color: #333;
   margin-bottom: 30rpx;
   display: block;
+}
+
+.basic-info {
+  margin-bottom: 30rpx;
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 28rpx;
+  color: #666;
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+.edit-btn {
+  font-size: 28rpx;
+  color: #667eea;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .stats-grid {
@@ -817,5 +1281,145 @@ export default {
 .logout-btn:active {
   background: #dc3545;
   color: white;
+}
+
+/* 弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 20rpx;
+  width: 90%;
+  max-width: 600rpx;
+  max-height: 80%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.modal-close {
+  font-size: 40rpx;
+  color: #999;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 30rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.nickname-input {
+  font-size: 28rpx;
+  color: #333;
+  padding: 15rpx 20rpx;
+  border: 1rpx solid #ccc;
+  border-radius: 10rpx;
+  background: #f8f9fa;
+}
+
+.input-tip {
+  font-size: 20rpx;
+  color: #999;
+  margin-top: 5rpx;
+}
+
+.form-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.form-label {
+  font-size: 28rpx;
+  color: #666;
+  font-weight: 500;
+  min-width: 100rpx;
+}
+
+.form-picker {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  padding: 15rpx 20rpx;
+  border: 1rpx solid #ccc;
+  border-radius: 10rpx;
+  background: #f8f9fa;
+}
+
+.form-input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  padding: 15rpx 20rpx;
+  border: 1rpx solid #ccc;
+  border-radius: 10rpx;
+  background: #f8f9fa;
+}
+
+.picker-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: space-around;
+  padding: 20rpx 30rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.btn-cancel, .btn-confirm {
+  flex: 1;
+  font-size: 32rpx;
+  padding: 15rpx 0;
+  border-radius: 10rpx;
+  text-align: center;
+}
+
+.btn-cancel {
+  background: #f0f0f0;
+  color: #666;
+  border: 1rpx solid #ccc;
+}
+
+.btn-confirm {
+  background: #667eea;
+  color: white;
+  border: none;
+}
+
+.btn-cancel:active {
+  background: #e0e0e0;
+}
+
+.btn-confirm:active {
+  background: #5a67d8;
 }
 </style>

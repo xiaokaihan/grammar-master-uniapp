@@ -137,13 +137,13 @@ class AuthService {
   /**
    * 微信登录
    */
-  async wechatLogin() {
+  async wechatLogin(userInfo) {
     try {
       this.currentStatus = AUTH_STATUS.LOADING
       this.notifyStatusChange()
       
       // 获取微信授权
-      const authData = await this.getWechatAuth()
+      const authData = await this.getWechatAuth(userInfo)
       
       // 调用登录管理器
       const result = await loginManager.wechatLogin(authData)
@@ -243,13 +243,10 @@ class AuthService {
   /**
    * 获取微信授权
    */
-  async getWechatAuth() {
+  async getWechatAuth(userInfo) {
     try {
       // 获取微信登录凭证
       const code = await this.getWechatCode()
-      
-      // 获取用户信息
-      const userInfo = await this.getUserProfile()
       
       return {
         code,
@@ -290,7 +287,7 @@ class AuthService {
   }
 
   /**
-   * 获取用户信息
+   * 获取用户信息 - 必须在用户点击事件中直接调用
    */
   getUserProfile() {
     return new Promise((resolve, reject) => {
@@ -299,7 +296,7 @@ class AuthService {
       }, 10000)
       
       uni.getUserProfile({
-        desc: '用于完善用户资料和个性化学习体验',
+        desc: '用于完善用户资料',
         lang: 'zh_CN',
         success: (res) => {
           clearTimeout(timeoutId)
@@ -320,6 +317,10 @@ class AuthService {
               errorMessage = '获取用户信息超时，请重试'
             } else if (err.errMsg.includes('cancel')) {
               errorMessage = '用户取消授权'
+            } else if (err.errMsg.includes('can only be invoked by user TAP gesture')) {
+              errorMessage = '获取用户信息失败，请重新点击登录按钮'
+            } else if (err.errMsg.includes('desc length does not meet the requirements')) {
+              errorMessage = '授权描述参数错误，请重试'
             }
           }
           

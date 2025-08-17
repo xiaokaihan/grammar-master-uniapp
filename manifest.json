@@ -1,68 +1,68 @@
 {
-  "name": "GrammarMaster",
-  "appid": "__UNI__GRAMMAR_MASTER",
-  "description": "英语语法学习小程序",
-  "versionName": "1.0.0",
-  "versionCode": "100",
-  "transformPx": false,
-  "app-plus": {
-    "usingComponents": true,
-    "nvueStyleCompiler": "uni-app",
-    "compilerVersion": 3,
-    "splashscreen": {
-      "alwaysShowBeforeRender": true,
-      "waiting": true,
-      "autoclose": true,
-      "delay": 0
+    "name" : "GrammarMaster",
+    "appid" : "__UNI__CA607B8",
+    "description" : "英语语法学习小程序",
+    "versionName" : "1.0.0",
+    "versionCode" : "100",
+    "transformPx" : false,
+    "app-plus" : {
+        "usingComponents" : true,
+        "nvueStyleCompiler" : "uni-app",
+        "compilerVersion" : 3,
+        "splashscreen" : {
+            "alwaysShowBeforeRender" : true,
+            "waiting" : true,
+            "autoclose" : true,
+            "delay" : 0
+        },
+        "modules" : {},
+        "distribute" : {
+            "android" : {
+                "permissions" : [
+                    "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\" />",
+                    "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\" />",
+                    "<uses-permission android:name=\"android.permission.VIBRATE\" />",
+                    "<uses-permission android:name=\"android.permission.READ_LOGS\" />",
+                    "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\" />",
+                    "<uses-feature android:name=\"android.hardware.camera.autofocus\" />",
+                    "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />",
+                    "<uses-permission android:name=\"android.permission.CAMERA\" />",
+                    "<uses-permission android:name=\"android.permission.GET_ACCOUNTS\" />",
+                    "<uses-permission android:name=\"android.permission.READ_PHONE_STATE\" />",
+                    "<uses-permission android:name=\"android.permission.CHANGE_WIFI_STATE\" />",
+                    "<uses-permission android:name=\"android.permission.WAKE_LOCK\" />",
+                    "<uses-permission android:name=\"android.permission.FLASHLIGHT\" />",
+                    "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\" />"
+                ]
+            },
+            "ios" : {},
+            "sdkConfigs" : {}
+        }
     },
-    "modules": {},
-    "distribute": {
-      "android": {
-        "permissions": [
-          "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\" />",
-          "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\" />",
-          "<uses-permission android:name=\"android.permission.VIBRATE\" />",
-          "<uses-permission android:name=\"android.permission.READ_LOGS\" />",
-          "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\" />",
-          "<uses-feature android:name=\"android.hardware.camera.autofocus\" />",
-          "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />",
-          "<uses-permission android:name=\"android.permission.CAMERA\" />",
-          "<uses-permission android:name=\"android.permission.GET_ACCOUNTS\" />",
-          "<uses-permission android:name=\"android.permission.READ_PHONE_STATE\" />",
-          "<uses-permission android:name=\"android.permission.CHANGE_WIFI_STATE\" />",
-          "<uses-permission android:name=\"android.permission.WAKE_LOCK\" />",
-          "<uses-permission android:name=\"android.permission.FLASHLIGHT\" />",
-          "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\" />"
-        ]
-      },
-      "ios": {},
-      "sdkConfigs": {}
-    }
-  },
-  "quickapp": {},
-  "mp-weixin": {
-    "appid": "wx7205f37efa5fb5d4",
-    "setting": {
-      "urlCheck": false
+    "quickapp" : {},
+    "mp-weixin" : {
+        "appid" : "wx7205f37efa5fb5d4",
+        "setting" : {
+            "urlCheck" : false
+        },
+        "usingComponents" : true,
+        "uniCloud" : {
+            "provider" : "aliyun",
+            "spaceId" : "mp-a9e38bc7-404b-4f4b-a273-9dc56c250af6",
+            "clientSecret" : "ztboNUx3CRo3vOX0hnizRQ=="
+        }
     },
-    "usingComponents": true,
-    "uniCloud": {
-      "provider": "aliyun",
-      "spaceId": "你的空间ID",
-      "clientSecret": "你的客户端密钥"
-    }
-  },
-  "mp-alipay": {
-    "usingComponents": true
-  },
-  "mp-baidu": {
-    "usingComponents": true
-  },
-  "mp-toutiao": {
-    "usingComponents": true
-  },
-  "uniStatistics": {
-    "enable": false
-  },
-  "vueVersion": "3"
+    "mp-alipay" : {
+        "usingComponents" : true
+    },
+    "mp-baidu" : {
+        "usingComponents" : true
+    },
+    "mp-toutiao" : {
+        "usingComponents" : true
+    },
+    "uniStatistics" : {
+        "enable" : false
+    },
+    "vueVersion" : "3"
 }
