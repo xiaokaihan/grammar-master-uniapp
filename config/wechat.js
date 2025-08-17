@@ -5,22 +5,22 @@
 
 // 开发环境配置
 const DEV_CONFIG = {
-  APP_ID: 'your_dev_app_id',
-  API_BASE_URL: 'http://localhost:3000/api',
+  APP_ID: 'wx7205f37efa5fb5d4',
+  USE_UNICLOUD: true,
   ENV: 'development'
 }
 
 // 生产环境配置
 const PROD_CONFIG = {
-  APP_ID: 'your_prod_app_id',
-  API_BASE_URL: 'https://your-production-api.com/api',
+  APP_ID: 'wx7205f37efa5fb5d4',
+  USE_UNICLOUD: true,
   ENV: 'production'
 }
 
 // 测试环境配置
 const TEST_CONFIG = {
-  APP_ID: 'your_test_app_id',
-  API_BASE_URL: 'https://your-test-api.com/api',
+  APP_ID: 'wx7205f37efa5fb5d4',
+  USE_UNICLOUD: true,
   ENV: 'test'
 }
 
@@ -62,7 +62,7 @@ export const ENV_INFO = {
 
 // 导出配置验证函数
 export function validateConfig() {
-  const requiredFields = ['APP_ID', 'API_BASE_URL']
+  const requiredFields = ['APP_ID', 'USE_UNICLOUD']
   const missingFields = requiredFields.filter(field => !WECHAT_CONFIG[field])
   
   if (missingFields.length > 0) {
@@ -77,7 +77,7 @@ export function validateConfig() {
 export function getConfigInfo() {
   return {
     appId: WECHAT_CONFIG.APP_ID,
-    apiBaseUrl: WECHAT_CONFIG.API_BASE_URL,
+    useUniCloud: WECHAT_CONFIG.USE_UNICLOUD,
     environment: WECHAT_CONFIG.ENV,
     isValid: validateConfig()
   }

@@ -1,0 +1,20 @@
+{
+  "name": "grammar-master-unicloud",
+  "version": "1.0.0",
+  "description": "GrammarMaster 语法学习小程序的 uniCloud 云服务",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "uniapp",
+    "unicloud",
+    "grammar",
+    "learning",
+    "miniprogram"
+  ],
+  "author": "GrammarMaster Team",
+  "license": "MIT"
+}

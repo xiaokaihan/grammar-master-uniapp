@@ -99,6 +99,12 @@
     <view class="function-menu card">
       <text class="section-title">功能设置</text>
       <view class="menu-list">
+        <!-- 添加测试按钮 -->
+        <view class="menu-item" @click="testNavigation">
+          <view class="menu-icon">🧪</view>
+          <text class="menu-text">测试导航</text>
+          <text class="menu-arrow">></text>
+        </view>
         <view class="menu-item" @click="navigateTo('/pages/profile/settings')">
           <view class="menu-icon">⚙️</view>
           <text class="menu-text">应用设置</text>
@@ -130,25 +136,25 @@
 </template>
 
 <script>
-import { loginManager } from '@/utils/loginManager.js'
+import { authService, AUTH_STATUS } from '@/utils/authService.js'
 
 export default {
   data() {
     return {
       userInfo: {
-        username: '语法学习者',
-        description: '坚持学习，提升英语语法水平',
-        level: 8,
-        nextLevelExp: 120,
-        levelProgress: 65,
-        studyDays: 45,
-        completedLessons: 23
+        username: '加载中...',
+        description: '正在加载用户信息',
+        level: 1,
+        nextLevelExp: 999,
+        levelProgress: 0,
+        studyDays: 0,
+        completedLessons: 0
       },
       learningStats: {
         totalLessons: 50,
-        completedLessons: 23,
-        accuracy: 78,
-        streak: 15
+        completedLessons: 0,
+        accuracy: 0,
+        streak: 0
       },
       achievements: [
         {
@@ -156,21 +162,21 @@ export default {
           name: '初来乍到',
           description: '完成第一节课',
           icon: '🎯',
-          unlocked: true
+          unlocked: false
         },
         {
           id: 2,
           name: '坚持不懈',
           description: '连续学习7天',
           icon: '🔥',
-          unlocked: true
+          unlocked: false
         },
         {
           id: 3,
           name: '知识达人',
           description: '完成10节课',
           icon: '📚',
-          unlocked: true
+          unlocked: false
         },
         {
           id: 4,
@@ -196,57 +202,195 @@ export default {
       ],
       totalAchievements: 12,
       currentMonth: '2024年1月',
-      calendarDays: []
+      calendarDays: [],
+      authStatus: AUTH_STATUS.UNKNOWN
     }
   },
   onLoad() {
     this.generateCalendarDays()
-    this.loadUserInfo()
+    this.initAuth()
   },
   onShow() {
-    this.loadUserInfo()
+    this.refreshUserInfo()
+  },
+  onUnload() {
+    // 移除状态监听器
+    authService.removeStatusListener(this.handleStatusChange)
   },
   computed: {
     userAvatar() {
-      const currentUser = loginManager.getCurrentUser()
+      const currentUser = authService.getUser()
       return currentUser?.avatar || '/static/images/avatar-default.svg'
     }
   },
   methods: {
-    // 加载用户信息
+    /**
+     * 初始化认证服务
+     */
+    async initAuth() {
+      try {
+        // 添加状态变化监听器
+        authService.addStatusListener(this.handleStatusChange)
+        
+        // 初始化认证服务
+        await authService.init()
+        
+        // 加载用户信息
+        this.loadUserInfo()
+      } catch (error) {
+        console.error('初始化认证服务失败:', error)
+        this.handleAuthError(error)
+      }
+    },
+
+    /**
+     * 处理认证状态变化
+     */
+    handleStatusChange(status, user, permissions) {
+      this.authStatus = status
+      
+      if (status === AUTH_STATUS.LOGGED_OUT) {
+        // 用户已退出，跳转到登录页面
+        this.redirectToLogin()
+      } else {
+        // 刷新用户信息
+        this.loadUserInfo()
+      }
+    },
+
+    /**
+     * 加载用户信息
+     */
     async loadUserInfo() {
       try {
-        const isLoggedIn = await loginManager.checkLoginStatus()
+        if (!authService.isLoggedIn()) {
+          this.redirectToLogin()
+          return
+        }
+
+        const currentUser = authService.getUser()
+        const permissions = authService.getPermissions()
         
-        if (isLoggedIn) {
-          const currentUser = loginManager.getCurrentUser()
-          const loginStatus = loginManager.getLoginStatus()
+        if (!currentUser) {
+          throw new Error('用户信息获取失败')
+        }
+
+        // 更新用户信息显示
+        this.userInfo.username = currentUser.nickname || '用户'
+        
+        if (authService.isGuest()) {
+          this.userInfo.description = '游客模式 - 功能受限'
+          this.userInfo.level = 1
+          this.userInfo.nextLevelExp = 999
+          this.userInfo.levelProgress = 0
+          this.userInfo.studyDays = 0
+          this.userInfo.completedLessons = 0
           
-          // 更新用户信息显示
-          this.userInfo.username = currentUser.nickname || '用户'
-          this.userInfo.description = loginStatus === 'guest' ? '游客模式 - 功能受限' : '坚持学习，提升英语语法水平'
-          
-          // 如果是游客模式，显示提示
-          if (loginStatus === 'guest') {
-            this.userInfo.level = 1
-            this.userInfo.nextLevelExp = 999
-            this.userInfo.levelProgress = 0
-            this.userInfo.studyDays = 0
-            this.userInfo.completedLessons = 0
-          }
+          // 游客模式下的统计
+          this.learningStats.completedLessons = 0
+          this.learningStats.accuracy = 0
+          this.learningStats.streak = 0
         } else {
-          // 未登录，跳转到登录页面
-          uni.redirectTo({
+          this.userInfo.description = '坚持学习，提升英语语法水平'
+          
+          // 微信用户的统计（这里可以连接真实数据）
+          this.learningStats.completedLessons = 23
+          this.learningStats.accuracy = 78
+          this.learningStats.streak = 15
+        }
+
+        // 更新成就状态
+        this.updateAchievements()
+        
+      } catch (error) {
+        console.error('加载用户信息失败:', error)
+        this.handleAuthError(error)
+      }
+    },
+
+    /**
+     * 更新成就状态
+     */
+    updateAchievements() {
+      if (authService.isGuest()) {
+        // 游客模式只解锁基础成就
+        this.achievements.forEach(achievement => {
+          achievement.unlocked = achievement.id <= 2
+        })
+      } else {
+        // 微信用户根据学习进度解锁成就
+        const completedLessons = this.learningStats.completedLessons
+        
+        this.achievements.forEach(achievement => {
+          switch (achievement.id) {
+            case 1: // 初来乍到
+              achievement.unlocked = completedLessons >= 1
+              break
+            case 2: // 坚持不懈
+              achievement.unlocked = this.learningStats.streak >= 7
+              break
+            case 3: // 知识达人
+              achievement.unlocked = completedLessons >= 10
+              break
+            case 4: // 完美主义
+              achievement.unlocked = this.learningStats.accuracy >= 100
+              break
+            case 5: // 时间管理
+              achievement.unlocked = this.learningStats.streak >= 30
+              break
+            case 6: // 语法大师
+              achievement.unlocked = completedLessons >= 50
+              break
+          }
+        })
+      }
+    },
+
+    /**
+     * 刷新用户信息
+     */
+    async refreshUserInfo() {
+      try {
+        await authService.refreshUserInfo()
+        this.loadUserInfo()
+      } catch (error) {
+        console.error('刷新用户信息失败:', error)
+      }
+    },
+
+    /**
+     * 处理认证错误
+     */
+    handleAuthError(error) {
+      console.error('认证错误:', error)
+      
+      // 显示错误提示
+      uni.showToast({
+        title: '认证失败，请重新登录',
+        icon: 'none',
+        duration: 2000
+      })
+      
+      // 延迟跳转到登录页面
+      setTimeout(() => {
+        this.redirectToLogin()
+      }, 2000)
+    },
+
+    /**
+     * 跳转到登录页面
+     */
+    redirectToLogin() {
+      uni.navigateTo({
+        url: '/pages/login/index',
+        fail: (err) => {
+          console.error('跳转登录页面失败:', err)
+          // 如果跳转失败，使用 reLaunch
+          uni.reLaunch({
             url: '/pages/login/index'
           })
         }
-      } catch (error) {
-        console.error('加载用户信息失败:', error)
-        uni.showToast({
-          title: '加载用户信息失败',
-          icon: 'none'
-        })
-      }
+      })
     },
 
     generateCalendarDays() {
@@ -270,14 +414,15 @@ export default {
         })
       }
     },
+    
     previousMonth() {
-      // 切换到上个月
       console.log('切换到上个月')
     },
+    
     nextMonth() {
-      // 切换到下个月
       console.log('切换到下个月')
     },
+    
     viewAchievementDetail(achievement) {
       uni.showModal({
         title: achievement.name,
@@ -285,11 +430,18 @@ export default {
         showCancel: false
       })
     },
+    
     navigateTo(path) {
-      uni.navigateTo({
-        url: path
+      // 使用认证服务检查页面访问权限
+      authService.navigateToPage(path).catch(error => {
+        console.error('页面导航失败:', error)
+        uni.showToast({
+          title: '页面访问失败',
+          icon: 'none'
+        })
       })
     },
+    
     async logout() {
       uni.showModal({
         title: '确认退出',
@@ -297,7 +449,7 @@ export default {
         success: async (res) => {
           if (res.confirm) {
             try {
-              const result = await loginManager.logout()
+              const result = await authService.logout()
               
               if (result.success) {
                 uni.showToast({
@@ -306,9 +458,7 @@ export default {
                 })
                 
                 // 跳转到登录页面
-                uni.redirectTo({
-                  url: '/pages/login/index'
-                })
+                this.redirectToLogin()
               } else {
                 throw new Error(result.message)
               }
@@ -316,6 +466,37 @@ export default {
               console.error('退出登录失败:', error)
               uni.showToast({
                 title: '退出登录失败',
+                icon: 'none'
+              })
+            }
+          }
+        }
+      })
+    },
+
+    testNavigation() {
+      uni.showModal({
+        title: '测试导航',
+        content: '点击确定将尝试导航到首页。',
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              const result = await authService.navigateToPage('/pages/index/index')
+              if (result) {
+                uni.showToast({
+                  title: '导航成功',
+                  icon: 'success'
+                })
+              } else {
+                uni.showToast({
+                  title: '导航失败',
+                  icon: 'none'
+                })
+              }
+            } catch (error) {
+              console.error('测试导航失败:', error)
+              uni.showToast({
+                title: '测试导航失败',
                 icon: 'none'
               })
             }

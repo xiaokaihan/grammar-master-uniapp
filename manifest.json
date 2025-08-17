@@ -41,11 +41,16 @@
   },
   "quickapp": {},
   "mp-weixin": {
-    "appid": "",
+    "appid": "wx7205f37efa5fb5d4",
     "setting": {
       "urlCheck": false
     },
-    "usingComponents": true
+    "usingComponents": true,
+    "uniCloud": {
+      "provider": "aliyun",
+      "spaceId": "你的空间ID",
+      "clientSecret": "你的客户端密钥"
+    }
   },
   "mp-alipay": {
     "usingComponents": true

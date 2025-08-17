@@ -5,6 +5,8 @@
 </template>
 
 <script>
+import { authService } from '@/utils/authService.js'
+
 export default {
   onLaunch: function() {
     console.log('App Launch')
@@ -18,12 +20,38 @@ export default {
     console.log('App Hide')
   },
   methods: {
-    initApp() {
-      // 检查用户登录状态
-      const token = uni.getStorageSync('token')
-      if (!token) {
-        // 可以在这里进行游客登录或其他初始化操作
-        console.log('用户未登录，使用游客模式')
+    async initApp() {
+      try {
+        console.log('🚀 开始初始化应用...')
+        
+        // 初始化认证服务
+        console.log('🔐 初始化认证服务...')
+        await authService.init()
+        console.log('✅ 认证服务初始化完成')
+        
+        // 显示认证状态
+        const status = authService.getStatus()
+        const user = authService.getUser()
+        const permissions = authService.getPermissions()
+        
+        console.log('📊 当前认证状态:', {
+          status,
+          user: user ? `${user.nickname || '用户'} (${user.id})` : '未登录',
+          permissions: permissions ? Object.keys(permissions).filter(k => permissions[k]).join(', ') : '无权限'
+        })
+        
+        console.log('🎉 应用初始化完成！')
+        
+      } catch (error) {
+        console.error('❌ 应用初始化失败:', error)
+        console.error('错误详情:', error.stack)
+        
+        // 显示错误提示
+        uni.showToast({
+          title: '应用初始化失败',
+          icon: 'none',
+          duration: 3000
+        })
       }
     }
   }

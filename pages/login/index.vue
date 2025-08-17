@@ -12,7 +12,7 @@
       <!-- Logo 和标题 -->
       <view class="header-section">
         <view class="logo-container">
-          <image class="logo" src="/static/images/logo.svg" mode="aspectFit"></image>
+          <view class="logo-placeholder">📚</view>
         </view>
         <text class="app-title">GrammarMaster</text>
         <text class="app-subtitle">让语法学习更简单、更高效</text>
@@ -84,140 +84,174 @@
 </template>
 
 <script>
-import { loginManager } from '@/utils/loginManager.js'
-import { wechatApi } from '@/utils/wechatApi.js'
+import { authService, AUTH_STATUS } from '@/utils/authService.js'
 
 export default {
   name: 'Login',
   data() {
     return {
-      isLoggingIn: false
+      isLoggingIn: false,
+      authStatus: AUTH_STATUS.UNKNOWN
     }
   },
   onLoad() {
-    // 检查是否已经登录
-    this.checkLoginStatus()
+    // 初始化认证服务
+    this.initAuth()
+  },
+  onUnload() {
+    // 移除状态监听器
+    authService.removeStatusListener(this.handleStatusChange)
   },
   methods: {
-    // 检查登录状态
-    async checkLoginStatus() {
+    /**
+     * 初始化认证服务
+     */
+    async initAuth() {
       try {
-        const isLoggedIn = await loginManager.checkLoginStatus()
-        if (isLoggedIn) {
+        // 添加状态变化监听器
+        authService.addStatusListener(this.handleStatusChange)
+        
+        // 初始化认证服务
+        await authService.init()
+        
+        // 检查是否已经登录
+        if (authService.isLoggedIn()) {
           this.redirectToMain()
         }
       } catch (error) {
-        console.log('检查登录状态失败:', error)
+        console.error('初始化认证服务失败:', error)
+        uni.showToast({
+          title: '初始化失败，请重试',
+          icon: 'none'
+        })
       }
     },
 
-    // 处理微信登录
+    /**
+     * 处理认证状态变化
+     */
+    handleStatusChange(status, user, permissions) {
+      this.authStatus = status
+      
+      // 如果登录成功，自动跳转
+      if (status === AUTH_STATUS.WECHAT || status === AUTH_STATUS.GUEST) {
+        this.redirectToMain()
+      }
+    },
+
+    /**
+     * 处理微信登录
+     */
     async handleWechatLogin() {
       if (this.isLoggingIn) return
       
       this.isLoggingIn = true
       
       try {
-        // 获取微信授权
-        const authResult = await this.getWechatAuth()
+        const result = await authService.wechatLogin()
         
-        if (authResult.success) {
-          // 使用授权信息登录
-          const loginResult = await loginManager.wechatLogin(authResult.data)
+        if (result.success) {
+          uni.showToast({
+            title: '登录成功',
+            icon: 'success'
+          })
           
-          if (loginResult.success) {
-            uni.showToast({
-              title: '登录成功',
-              icon: 'success'
-            })
-            
-            // 跳转到主页面
-            this.redirectToMain()
-          } else {
-            throw new Error(loginResult.message)
-          }
-        } else {
-          throw new Error(authResult.message)
+          // 状态变化监听器会自动处理跳转
         }
       } catch (error) {
         console.error('微信登录失败:', error)
+        
+        // 显示具体的错误信息
+        let errorMessage = error.message || '登录过程中出现错误，请重试'
+        
+        // 根据错误类型提供不同的处理建议
+        if (error.message.includes('拒绝授权')) {
+          errorMessage = '您拒绝了授权，请点击"微信授权登录"按钮并允许获取用户信息'
+        } else if (error.message.includes('超时')) {
+          errorMessage = '网络超时，请检查网络连接后重试'
+        } else if (error.message.includes('取消授权')) {
+          errorMessage = '您取消了授权，请重新点击登录按钮'
+        }
+        
         uni.showModal({
           title: '登录失败',
-          content: error.message || '登录过程中出现错误，请重试',
-          showCancel: false
+          content: errorMessage,
+          showCancel: false,
+          confirmText: '我知道了'
         })
       } finally {
         this.isLoggingIn = false
       }
     },
 
-    // 获取微信授权
-    async getWechatAuth() {
-      try {
-        // 获取微信登录凭证
-        const codeResult = await wechatApi.getWechatCode()
-        
-        if (!codeResult.success) {
-          throw new Error('获取微信登录凭证失败')
-        }
-        
-        // 获取用户信息
-        const profileResult = await wechatApi.getUserProfile({
-          desc: '用于完善用户资料'
-        })
-        
-        if (!profileResult.success) {
-          throw new Error('获取用户信息失败')
-        }
-        
-        return {
-          success: true,
-          data: {
-            code: codeResult.data.code,
-            userInfo: profileResult.data
-          }
-        }
-      } catch (error) {
-        console.error('获取微信授权失败:', error)
-        throw error
-      }
-    },
-
-    // 游客登录
-    handleGuestLogin() {
+    /**
+     * 处理游客登录
+     */
+    async handleGuestLogin() {
+      if (this.isLoggingIn) return
+      
       uni.showModal({
         title: '游客模式',
         content: '游客模式功能受限，建议使用微信登录获得完整体验',
         confirmText: '继续',
         cancelText: '微信登录',
-        success: (res) => {
+        success: async (res) => {
           if (res.confirm) {
-            // 设置游客模式
-            loginManager.setGuestMode()
-            this.redirectToMain()
+            this.isLoggingIn = true
+            
+            try {
+              await authService.guestLogin()
+              
+              uni.showToast({
+                title: '游客模式已启用',
+                icon: 'success'
+              })
+              
+              // 状态变化监听器会自动处理跳转
+            } catch (error) {
+              console.error('游客登录失败:', error)
+              uni.showToast({
+                title: '游客模式启用失败',
+                icon: 'none'
+              })
+            } finally {
+              this.isLoggingIn = false
+            }
           }
         }
       })
     },
 
-    // 跳转到主页面
+    /**
+     * 跳转到主页面
+     */
     redirectToMain() {
       uni.switchTab({
         url: '/pages/index/index'
       })
     },
 
-    // 查看用户协议
+    /**
+     * 查看用户协议
+     */
     viewUserAgreement() {
-      uni.navigateTo({
-        url: '/pages/login/agreement?type=user'
+      uni.showModal({
+        title: '用户协议',
+        content: '感谢您使用 GrammarMaster 语法学习小程序！\n\n我们致力于为您提供优质的语法学习体验。\n\n使用本应用即表示您同意遵守相关服务条款。',
+        showCancel: false,
+        confirmText: '我知道了'
       })
     },
 
-    // 查看隐私政策
+    /**
+     * 查看隐私政策
+     */
     viewPrivacyPolicy() {
-      uni.navigateTo({
-        url: '/pages/login/agreement?type=privacy'
+      uni.showModal({
+        title: '隐私政策',
+        content: '我们重视您的隐私保护。\n\n您的个人信息仅用于提供学习服务，我们承诺不会泄露给第三方。\n\n您可以随时在设置中管理您的隐私选项。',
+        showCancel: false,
+        confirmText: '我知道了'
       })
     }
   }
@@ -286,9 +320,16 @@ export default {
   margin-bottom: 30rpx;
 }
 
-.logo {
+.logo-placeholder {
   width: 120rpx;
   height: 120rpx;
+  font-size: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  margin: 0 auto;
 }
 
 .app-title {

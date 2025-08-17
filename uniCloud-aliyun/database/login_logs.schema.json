@@ -1,0 +1,56 @@
+{
+  "bsonType": "object",
+  "required": ["userId", "openid", "loginTime"],
+  "permission": {
+    "read": "auth.openid == doc.openid",
+    "create": "auth.openid != null",
+    "update": false,
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "ID，系统自动生成"
+    },
+    "userId": {
+      "bsonType": "string",
+      "description": "用户ID",
+      "title": "用户ID"
+    },
+    "openid": {
+      "bsonType": "string",
+      "description": "微信用户openid",
+      "title": "微信ID"
+    },
+    "loginTime": {
+      "bsonType": "timestamp",
+      "description": "登录时间",
+      "title": "登录时间"
+    },
+    "userAgent": {
+      "bsonType": "string",
+      "description": "用户代理",
+      "title": "用户代理"
+    },
+    "ip": {
+      "bsonType": "string",
+      "description": "IP地址",
+      "title": "IP地址"
+    },
+    "platform": {
+      "bsonType": "string",
+      "description": "登录平台",
+      "title": "登录平台"
+    },
+    "success": {
+      "bsonType": "bool",
+      "description": "是否登录成功",
+      "title": "登录成功",
+      "default": true
+    },
+    "errorMessage": {
+      "bsonType": "string",
+      "description": "错误信息",
+      "title": "错误信息"
+    }
+  }
+}

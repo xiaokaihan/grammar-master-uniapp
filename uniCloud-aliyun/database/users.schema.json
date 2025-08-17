@@ -1,0 +1,85 @@
+{
+  "bsonType": "object",
+  "required": ["openid", "nickname", "createTime"],
+  "permission": {
+    "read": "auth.openid == doc.openid",
+    "create": "auth.openid != null",
+    "update": "auth.openid == doc.openid",
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "ID，系统自动生成"
+    },
+    "openid": {
+      "bsonType": "string",
+      "description": "微信用户openid",
+      "title": "微信ID"
+    },
+    "unionid": {
+      "bsonType": "string",
+      "description": "微信用户unionid",
+      "title": "微信UnionID"
+    },
+    "nickname": {
+      "bsonType": "string",
+      "description": "用户昵称",
+      "title": "昵称",
+      "maxLength": 32
+    },
+    "avatar": {
+      "bsonType": "string",
+      "description": "用户头像",
+      "title": "头像"
+    },
+    "gender": {
+      "bsonType": "int",
+      "description": "性别：0-未知，1-男，2-女",
+      "title": "性别",
+      "minimum": 0,
+      "maximum": 2
+    },
+    "country": {
+      "bsonType": "string",
+      "description": "国家",
+      "title": "国家"
+    },
+    "province": {
+      "bsonType": "string",
+      "description": "省份",
+      "title": "省份"
+    },
+    "city": {
+      "bsonType": "string",
+      "description": "城市",
+      "title": "城市"
+    },
+    "language": {
+      "bsonType": "string",
+      "description": "语言",
+      "title": "语言"
+    },
+    "createTime": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "title": "创建时间"
+    },
+    "lastLoginTime": {
+      "bsonType": "timestamp",
+      "description": "最后登录时间",
+      "title": "最后登录时间"
+    },
+    "loginCount": {
+      "bsonType": "int",
+      "description": "登录次数",
+      "title": "登录次数",
+      "minimum": 0
+    },
+    "isGuest": {
+      "bsonType": "bool",
+      "description": "是否为游客用户",
+      "title": "游客用户",
+      "default": false
+    }
+  }
+}
