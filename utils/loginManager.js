@@ -4,6 +4,7 @@
  */
 
 import { storage } from './storage.js'
+import { wechatApi } from './wechatApi.js'
 
 // 登录状态常量
 export const LOGIN_STATUS = {
@@ -16,7 +17,8 @@ export const LOGIN_STATUS = {
 const STORAGE_KEYS = {
   LOGIN_STATUS: 'loginStatus',
   USER_INFO: 'userInfo',
-  WECHAT_TOKEN: 'wechatToken',
+  ACCESS_TOKEN: 'accessToken',
+  REFRESH_TOKEN: 'refreshToken',
   LOGIN_TIME: 'loginTime',
   SESSION_EXPIRE: 'sessionExpire'
 }
@@ -92,19 +94,44 @@ class LoginManager {
     try {
       console.log('开始微信登录:', authData)
       
-      // 模拟后端验证（实际项目中应该调用真实的后端API）
-      const userInfo = await this.verifyWechatAuth(authData)
+      // 检查网络状态
+      const isNetworkAvailable = await wechatApi.checkNetworkStatus()
+      if (!isNetworkAvailable) {
+        wechatApi.showNetworkError()
+        throw new Error('网络连接不可用')
+      }
       
-      // 保存登录状态
-      await this.saveLoginStatus(LOGIN_STATUS.WECHAT, userInfo)
+      // 调用真实的后端登录接口
+      const loginResult = await wechatApi.callLoginApi(authData)
       
-      return {
-        success: true,
-        message: '登录成功',
-        data: userInfo
+      if (loginResult.success) {
+        const { userInfo, accessToken, refreshToken } = loginResult.data
+        
+        // 保存令牌信息
+        await storage.set(STORAGE_KEYS.ACCESS_TOKEN, accessToken)
+        await storage.set(STORAGE_KEYS.REFRESH_TOKEN, refreshToken)
+        
+        // 保存登录状态
+        await this.saveLoginStatus(LOGIN_STATUS.WECHAT, userInfo)
+        
+        return {
+          success: true,
+          message: '登录成功',
+          data: userInfo
+        }
+      } else {
+        throw new Error(loginResult.message || '登录失败')
       }
     } catch (error) {
       console.error('微信登录失败:', error)
+      
+      // 显示具体的错误信息
+      if (error.message.includes('网络')) {
+        wechatApi.showNetworkError()
+      } else {
+        wechatApi.showLoginError(error.message)
+      }
+      
       return {
         success: false,
         message: error.message || '登录失败'
@@ -277,7 +304,8 @@ class LoginManager {
       // 清除本地存储
       await storage.remove(STORAGE_KEYS.LOGIN_STATUS)
       await storage.remove(STORAGE_KEYS.USER_INFO)
-      await storage.remove(STORAGE_KEYS.WECHAT_TOKEN)
+      await storage.remove(STORAGE_KEYS.ACCESS_TOKEN)
+      await storage.remove(STORAGE_KEYS.REFRESH_TOKEN)
       await storage.remove(STORAGE_KEYS.LOGIN_TIME)
       await storage.remove(STORAGE_KEYS.SESSION_EXPIRE)
       
@@ -329,6 +357,107 @@ class LoginManager {
    */
   isWechatLogin() {
     return this.loginStatus === LOGIN_STATUS.WECHAT
+  }
+
+  /**
+   * 获取访问令牌
+   */
+  async getAccessToken() {
+    return await storage.get(STORAGE_KEYS.ACCESS_TOKEN)
+  }
+
+  /**
+   * 获取刷新令牌
+   */
+  async getRefreshToken() {
+    return await storage.get(STORAGE_KEYS.REFRESH_TOKEN)
+  }
+
+  /**
+   * 刷新访问令牌
+   */
+  async refreshAccessToken() {
+    try {
+      const refreshToken = await this.getRefreshToken()
+      
+      if (!refreshToken) {
+        throw new Error('刷新令牌不存在')
+      }
+      
+      const result = await wechatApi.refreshToken(refreshToken)
+      
+      if (result.success) {
+        const { accessToken, refreshToken: newRefreshToken } = result.data
+        
+        // 保存新的令牌
+        await storage.set(STORAGE_KEYS.ACCESS_TOKEN, accessToken)
+        await storage.set(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken)
+        
+        return {
+          success: true,
+          data: { accessToken, refreshToken: newRefreshToken }
+        }
+      } else {
+        throw new Error(result.message || '刷新令牌失败')
+      }
+    } catch (error) {
+      console.error('刷新访问令牌失败:', error)
+      
+      // 刷新失败，清除登录状态
+      await this.logout()
+      
+      return {
+        success: false,
+        message: error.message || '刷新令牌失败'
+      }
+    }
+  }
+
+  /**
+   * 验证令牌有效性
+   */
+  async validateToken() {
+    try {
+      const accessToken = await this.getAccessToken()
+      
+      if (!accessToken) {
+        return false
+      }
+      
+      // 调用后端接口验证令牌
+      const result = await wechatApi.getUserInfo(accessToken)
+      
+      if (result.success) {
+        // 更新用户信息
+        await this.updateUserInfo(result.data)
+        return true
+      } else {
+        return false
+      }
+    } catch (error) {
+      console.error('验证令牌失败:', error)
+      return false
+    }
+  }
+
+  /**
+   * 自动刷新令牌（如果需要）
+   */
+  async autoRefreshTokenIfNeeded() {
+    try {
+      const accessToken = await this.getAccessToken()
+      
+      if (!accessToken) {
+        return false
+      }
+      
+      // 检查令牌是否即将过期（这里可以根据实际需求调整）
+      // 暂时简单返回 true，实际项目中应该解析 JWT 令牌的过期时间
+      return true
+    } catch (error) {
+      console.error('自动刷新令牌检查失败:', error)
+      return false
+    }
   }
 }
 

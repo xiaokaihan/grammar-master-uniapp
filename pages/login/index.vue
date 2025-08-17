@@ -85,6 +85,7 @@
 
 <script>
 import { loginManager } from '@/utils/loginManager.js'
+import { wechatApi } from '@/utils/wechatApi.js'
 
 export default {
   name: 'Login',
@@ -151,55 +152,35 @@ export default {
     },
 
     // 获取微信授权
-    getWechatAuth() {
-      return new Promise((resolve, reject) => {
-        // #ifdef MP-WEIXIN
-        uni.login({
-          provider: 'weixin',
-          success: (loginRes) => {
-            if (loginRes.code) {
-              // 获取用户信息
-              uni.getUserProfile({
-                desc: '用于完善用户资料',
-                success: (profileRes) => {
-                  resolve({
-                    success: true,
-                    data: {
-                      code: loginRes.code,
-                      userInfo: profileRes.userInfo
-                    }
-                  })
-                },
-                fail: (profileErr) => {
-                  reject(new Error('获取用户信息失败'))
-                }
-              })
-            } else {
-              reject(new Error('微信登录失败'))
-            }
-          },
-          fail: (loginErr) => {
-            reject(new Error('微信授权失败'))
-          }
+    async getWechatAuth() {
+      try {
+        // 获取微信登录凭证
+        const codeResult = await wechatApi.getWechatCode()
+        
+        if (!codeResult.success) {
+          throw new Error('获取微信登录凭证失败')
+        }
+        
+        // 获取用户信息
+        const profileResult = await wechatApi.getUserProfile({
+          desc: '用于完善用户资料'
         })
-        // #endif
-
-        // #ifndef MP-WEIXIN
-        // 非微信小程序环境，模拟登录
-        setTimeout(() => {
-          resolve({
-            success: true,
-            data: {
-              code: 'mock_code',
-              userInfo: {
-                nickName: '测试用户',
-                avatarUrl: '/static/images/avatar-default.svg'
-              }
-            }
-          })
-        }, 1000)
-        // #endif
-      })
+        
+        if (!profileResult.success) {
+          throw new Error('获取用户信息失败')
+        }
+        
+        return {
+          success: true,
+          data: {
+            code: codeResult.data.code,
+            userInfo: profileResult.data
+          }
+        }
+      } catch (error) {
+        console.error('获取微信授权失败:', error)
+        throw error
+      }
     },
 
     // 游客登录
