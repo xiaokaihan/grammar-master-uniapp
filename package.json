@@ -1,0 +1,57 @@
+{
+  "name": "grammar-master-uniapp",
+  "version": "1.0.0",
+  "description": "英语语法学习小程序",
+  "main": "main.js",
+  "scripts": {
+    "dev:app": "uni build --watch --platform app",
+    "dev:custom": "uni build --watch --platform custom",
+    "dev:h5": "uni build --watch --platform h5",
+    "dev:mp-alipay": "uni build --watch --platform mp-alipay",
+    "dev:mp-baidu": "uni build --watch --platform mp-baidu",
+    "dev:mp-kuaishou": "uni build --watch --platform mp-kuaishou",
+    "dev:mp-lark": "uni build --watch --platform mp-lark",
+    "dev:mp-qq": "uni build --watch --platform mp-qq",
+    "dev:mp-toutiao": "uni build --watch --platform mp-toutiao",
+    "dev:mp-weixin": "uni build --watch --platform mp-weixin",
+    "dev:quickapp-webview": "uni build --watch --platform quickapp-webview",
+    "build:app": "uni build --platform app",
+    "build:custom": "uni build --platform custom",
+    "build:h5": "uni build --platform h5",
+    "build:mp-alipay": "uni build --platform mp-alipay",
+    "build:mp-baidu": "uni build --platform mp-baidu",
+    "build:mp-kuaishou": "uni build --platform mp-kuaishou",
+    "build:mp-lark": "uni build --platform mp-lark",
+    "build:mp-qq": "uni build --platform mp-qq",
+    "build:mp-toutiao": "uni build --platform mp-toutiao",
+    "build:mp-weixin": "uni build --platform mp-weixin",
+    "build:quickapp-webview": "uni build --platform quickapp-webview"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-3080920231225001",
+    "@dcloudio/uni-app-plus": "3.0.0-3080920231225001",
+    "@dcloudio/uni-components": "3.0.0-3080920231225001",
+    "@dcloudio/uni-h5": "3.0.0-3080920231225001",
+    "@dcloudio/uni-mp-alipay": "3.0.0-3080920231225001",
+    "@dcloudio/uni-mp-baidu": "3.0.0-3080920231225001",
+    "@dcloudio/uni-mp-kuaishou": "3.0.0-3080920231225001",
+    "@dcloudio/uni-mp-lark": "3.0.0-3080920231225001",
+    "@dcloudio/uni-mp-qq": "3.0.0-3080920231225001",
+    "@dcloudio/uni-mp-toutiao": "3.0.0-3080920231225001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-3080920231225001",
+    "@dcloudio/uni-quickapp-webview": "3.0.0-3080920231225001",
+    "vue": "^3.2.45"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "^3.3.2",
+    "@dcloudio/uni-automator": "3.0.0-3080920231225001",
+    "@dcloudio/uni-cli-shared": "3.0.0-3080920231225001",
+    "@dcloudio/uni-stacktracey": "3.0.0-3080920231225001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-3080920231225001",
+    "typescript": "^4.9.4",
+    "vite": "4.0.4"
+  },
+  "uni-app": {
+    "scripts": {}
+  }
+}

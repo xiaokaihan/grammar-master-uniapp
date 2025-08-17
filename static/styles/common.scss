@@ -1,0 +1,77 @@
+// 全局通用样式
+$primary-color: #3cc51f;
+$secondary-color: #2fb816;
+$accent-color: #52c41a;
+$text-color: #333333;
+$text-secondary: #666666;
+$text-muted: #999999;
+$background-color: #f8f8f8;
+$card-background: #ffffff;
+$border-color: #e8e8e8;
+$border-radius: 16rpx;
+$shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+
+// 间距变量
+$spacing-xs: 8rpx;
+$spacing-sm: 16rpx;
+$spacing-md: 24rpx;
+$spacing-lg: 32rpx;
+$spacing-xl: 48rpx;
+
+// 字体大小
+$font-size-xs: 24rpx;
+$font-size-sm: 28rpx;
+$font-size-md: 32rpx;
+$font-size-lg: 36rpx;
+$font-size-xl: 40rpx;
+$font-size-xxl: 48rpx;
+
+// 通用混合器
+@mixin card-style {
+  background: $card-background;
+  border-radius: $border-radius;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  box-shadow: $shadow;
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+// 动画
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
